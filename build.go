@@ -40,7 +40,7 @@ const (
 )
 
 var (
-	setup = flag.Bool("setup", false, "Do an initial project setup")
+	setup = flag.String("setup", "", "Do an initial project setup. Takes the base repo name as an argument.")
 	pkg   = flag.String("package", "", "Name of the package to build")
 )
 
@@ -123,12 +123,12 @@ func main() {
 		log.Fatalf("Failed to get the current working directory: %v", err)
 	}
 
-	if *pkg == "" {
+	if *pkg == "" && *setup == "" {
 		log.Fatalf("Package name is required")
 	}
 
-	if *setup {
-		setupProject(root, *pkg)
+	if *setup != "" {
+		setupProject(root, *setup)
 		return
 	}
 
