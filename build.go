@@ -25,7 +25,6 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"log"
@@ -37,11 +36,6 @@ import (
 
 const (
 	DefaultThirdParty = "third_party"
-)
-
-var (
-	setup = flag.String("setup", "", "Do an initial project setup. Takes the base repo name as an argument.")
-	pkg   = flag.String("package", "", "Name of the package to build")
 )
 
 type Package struct {
@@ -93,7 +87,12 @@ func run(name string, arg ...string) {
 
 // setupProject does the initial setup of the third_party src directory
 // including setting up the symlink to the cwd from the src directory.
-func setupProject(root string, pkg string) {
+func setupProject(pkg string) {
+	root, err := os.Getwd()
+	if err != nil {
+		log.Fatalf("Failed to get the current working directory: %v", err)
+	}
+
 	src := path.Join(thirdPartyDir(), "src", pkg)
 	srcdir := path.Dir(src)
 
@@ -110,27 +109,25 @@ func setupProject(root string, pkg string) {
 	}
 }
 
-func build(pkg string) {
-	run("go", "build", pkg)
+func build(pkg string, args ...string) {
+	buildArgs := []string{"build", pkg}
+	buildArgs = append(buildArgs, args...)
+	run("go", buildArgs...)
 }
 
 func main() {
 	log.SetFlags(0)
-	flag.Parse()
 
-	root, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("Failed to get the current working directory: %v", err)
+	if len(os.Args) <= 1 {
+		log.Fatalf("No commnad")
 	}
 
-	if *pkg == "" && *setup == "" {
-		log.Fatalf("Package name is required")
-	}
+	cmd := os.Args[1]
 
-	if *setup != "" {
-		setupProject(root, *setup)
+	if cmd == "setup" && len(os.Args) > 2 {
+		setupProject(os.Args[2])
 		return
 	}
 
-	build(*pkg)
+	build(os.Args[1], os.Args[2:]...)
 }
