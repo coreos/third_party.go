@@ -1,14 +1,13 @@
-# build.go - self container Go build helper
+# path.go - self contained GOPATH helper
 
-
-build.go is a self contained build system that handles bumping third party repos, gopath and building
+path.go is a self contained single file that helps with bumping third party repos and managing the GOPATH
 
 ## Usage
 
 ### Setup a repo
 
 ```
-go run build.go --setup github.com/philips/build.go/example
+go run path.go setup github.com/philips/build.go/example
 git add .
 git commit -m "Initial commit"
 ```
@@ -16,5 +15,5 @@ git commit -m "Initial commit"
 ### Build the project
 
 ```
-go build --package github.com/philips/build.go/example
+go run path.go build -v github.com/philips/build.go/example
 ```

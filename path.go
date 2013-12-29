@@ -129,5 +129,5 @@ func main() {
 		return
 	}
 
-	build(os.Args[1], os.Args[2:]...)
+	run("go", os.Args[1:]...)
 }
