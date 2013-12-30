@@ -1,5 +1,3 @@
-// +build ignore
-
 /*
 Copyright 2013 Brandon Philips
 
@@ -27,20 +25,21 @@ package main
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
 const (
 	DefaultThirdParty = "third_party"
 )
 
-type Package struct {
-}
-
+// thirdPartyDir creates a string path to the third_party directory based on
+// the current working directory.
 func thirdPartyDir() string {
 	root, err := os.Getwd()
 	if err != nil {
@@ -49,6 +48,8 @@ func thirdPartyDir() string {
 	return path.Join(root, DefaultThirdParty)
 }
 
+// binDir creates a string path to the GOBIN directory based on the current
+// working directory.
 func binDir() string {
 	root, err := os.Getwd()
 	if err != nil {
@@ -57,13 +58,12 @@ func binDir() string {
 	return path.Join(root, "bin")
 }
 
-func run(name string, arg ...string) {
+// runEnv execs a command like a shell script piping everything to the parent's
+// stderr/stdout and uses the given environment.
+func runEnv(env []string, name string, arg ...string) {
 	cmd := exec.Command(name, arg...)
 
-	cmd.Env = append(os.Environ(),
-		"GOPATH="+thirdPartyDir(),
-		"GOBIN="+binDir(),
-	)
+	cmd.Env = env
 
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
@@ -83,6 +83,16 @@ func run(name string, arg ...string) {
 	go io.Copy(os.Stdout, stdout)
 	go io.Copy(os.Stderr, stderr)
 	cmd.Wait()
+}
+
+// run calls runEnv with the GOPATH third_party packages.
+func run(name string, arg ...string) {
+	env := append(os.Environ(),
+		"GOPATH="+thirdPartyDir(),
+		"GOBIN="+binDir(),
+	)
+
+	runEnv(env, name, arg...)
 }
 
 // setupProject does the initial setup of the third_party src directory
@@ -109,10 +119,93 @@ func setupProject(pkg string) {
 	}
 }
 
-func build(pkg string, args ...string) {
-	buildArgs := []string{"build", pkg}
-	buildArgs = append(buildArgs, args...)
-	run("go", buildArgs...)
+// commit grabs the commit id from hg or git as a string.
+func commit(dir string) string{
+	base := path.Base(dir)
+	switch base {
+		case ".git": return commitGit(dir)
+		case ".hg": return commitHg(dir)
+		default: return ""
+	}
+}
+
+// commitGit returns the current HEAD commit hash for a given git dir.
+func commitGit(dir string) string {
+	out, err := exec.Command("git", "--git-dir="+dir, "rev-parse", "HEAD").Output()
+	if err != nil {
+		return ""
+	}
+	return string(out)
+}
+
+// commitHg returns the current HEAD commit hash for a given git dir.
+func commitHg(dir string) string {
+	out, err := exec.Command("hg", "id", "-i", "-R", dir).Output()
+	if err != nil {
+		return ""
+	}
+	return string(out)
+}
+
+// removeVcs removes a .git or .hg directory from the given root if it exists.
+func removeVcs(root string) (bool, string) {
+	for _, v := range([]string{".git", ".hg"}) {
+		r := path.Join(root, v)
+		info, err := os.Stat(r)
+
+		if err != nil {
+			continue
+		}
+
+
+		// We didn't find it, next!
+		if info.IsDir() == false {
+			continue
+		}
+
+		// We found it, grab the commit and remove the directory
+		c := commit(r)
+		err = os.RemoveAll(r)
+		if err != nil {
+			log.Fatalf("removeVcs: %v", err)
+		}
+		return true, c
+	}
+
+	return false, ""
+}
+
+// bump takes care of grabbing a package, getting the package git hash and
+// removing all of the version control stuff.
+func bump(pkg string) {
+	tpd := thirdPartyDir()
+
+	temp, _ := ioutil.TempDir(tpd, "bump")
+	defer os.RemoveAll(temp)
+
+	env := append(os.Environ(),
+		"GOPATH="+temp,
+	)
+
+	runEnv(env, "go", "get", "-u", "-d", pkg)
+
+	for {
+		root := path.Join(temp, "src", pkg) // the temp installation root
+		home := path.Join(tpd, "src", pkg) // where the package will end up
+
+		ok, c := removeVcs(root)
+		if ok {
+			os.Rename(root, home)
+			println(strings.TrimSpace(c))
+			break
+		}
+
+		// Pop off and try to find this directory!
+		pkg = path.Dir(pkg)
+		if pkg == "." {
+			return
+		}
+	}
 }
 
 func main() {
@@ -126,6 +219,11 @@ func main() {
 
 	if cmd == "setup" && len(os.Args) > 2 {
 		setupProject(os.Args[2])
+		return
+	}
+
+	if cmd == "bump" && len(os.Args) > 2 {
+		bump(os.Args[2])
 		return
 	}
 

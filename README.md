@@ -17,3 +17,9 @@ git commit -m "Initial commit"
 ```
 go run path.go build -v github.com/philips/build.go/example
 ```
+
+## Test
+
+```
+go test path_test.go
+```
