@@ -1,0 +1,5 @@
+#!/bin/sh
+
+tail -n +2 path.go > path_tmp.go
+go test -v .
+rm path_tmp.go
