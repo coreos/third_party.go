@@ -1,4 +1,4 @@
-# path.go - self contained GOPATH helper
+# path.go
 
 path.go is a self contained single file that helps with bumping third party repos and managing the GOPATH.
 
