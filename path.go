@@ -50,6 +50,10 @@ func thirdPartyDir() string {
 	return path.Join(root, DefaultThirdParty)
 }
 
+func srcDir() string {
+	return path.Join(thirdPartyDir(), "src")
+}
+
 // binDir creates a string path to the GOBIN directory based on the current
 // working directory.
 func binDir() string {
@@ -122,12 +126,15 @@ func setupProject(pkg string) {
 }
 
 // commit grabs the commit id from hg or git as a string.
-func commit(dir string) string{
+func commit(dir string) string {
 	base := path.Base(dir)
 	switch base {
-		case ".git": return commitGit(dir)
-		case ".hg": return commitHg(dir)
-		default: return ""
+	case ".git":
+		return commitGit(dir)
+	case ".hg":
+		return commitHg(dir)
+	default:
+		return ""
 	}
 }
 
@@ -151,14 +158,13 @@ func commitHg(dir string) string {
 
 // removeVcs removes a .git or .hg directory from the given root if it exists.
 func removeVcs(root string) (bool, string) {
-	for _, v := range([]string{".git", ".hg"}) {
+	for _, v := range []string{".git", ".hg"} {
 		r := path.Join(root, v)
 		info, err := os.Stat(r)
 
 		if err != nil {
 			continue
 		}
-
 
 		// We didn't find it, next!
 		if info.IsDir() == false {
@@ -193,12 +199,12 @@ func bump(pkg string) {
 
 	for {
 		root := path.Join(temp, "src", pkg) // the temp installation root
-		home := path.Join(tpd, "src", pkg) // where the package will end up
+		home := path.Join(tpd, "src", pkg)  // where the package will end up
 
 		ok, c := removeVcs(root)
 		if ok {
 			os.Rename(root, home)
-			println(strings.TrimSpace(c))
+			fmt.Printf("%s %s\n", pkg, strings.TrimSpace(c))
 			break
 		}
 
@@ -207,6 +213,61 @@ func bump(pkg string) {
 		if pkg == "." {
 			return
 		}
+	}
+}
+
+// validPkg uses go list to decide if the given path is a valid go package.
+// This is used by the bumpAll walk to bump all of the existing packages.
+func validPkg(pkg string) bool {
+	env := append(os.Environ(),
+		"GOPATH="+thirdPartyDir(),
+	)
+	cmd := exec.Command("go", "list", pkg)
+	cmd.Env = env
+
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+
+	if pkg == strings.TrimSpace(string(out)) {
+		return true
+	}
+
+	return false
+}
+
+// bumpWalk walks the third_party directory and bumps all of the packages that it finds.
+func bumpWalk(path string, info os.FileInfo, err error) error {
+	if err != nil {
+		return nil
+	}
+
+	// go packages are always directories
+	if info.IsDir() == false {
+		return nil
+	}
+
+	parts := strings.Split(path, srcDir()+"/")
+	if len(parts) == 1 {
+		return nil
+	}
+
+	pkg := parts[1]
+
+	if validPkg(pkg) == false {
+		return nil
+	}
+
+	bump(pkg)
+
+	return nil
+}
+
+func bumpAll() {
+	err := filepath.Walk(srcDir(), bumpWalk)
+	if err != nil {
+		log.Fatalf(err.Error())
 	}
 }
 
@@ -226,6 +287,11 @@ func main() {
 
 	if cmd == "bump" && len(os.Args) > 2 {
 		bump(os.Args[2])
+		return
+	}
+
+	if cmd == "bump-all" && len(os.Args) > 1 {
+		bumpAll()
 		return
 	}
 
