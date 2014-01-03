@@ -8,7 +8,7 @@ party repos and managing the GOPATH.
 ### Setup a repo
 
 ```
-curl https://github.com/coreos/third_party.go/blob/master/third_party.go
+curl https://raw.github.com/coreos/third_party.go/master/third_party.go > third_party.go
 go run third_party.go setup github.com/mygithubname/newproject
 git add .
 git commit -m "Initial commit"
