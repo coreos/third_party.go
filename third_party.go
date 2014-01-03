@@ -203,15 +203,24 @@ func bump(pkg string) {
 
 		ok, c := removeVcs(root)
 		if ok {
+			// Create the path leading up to the package
 			err := os.MkdirAll(path.Dir(home), 0755)
 			if err != nil {
 				log.Fatalf("bump: %v", err)
 			}
 
+			// Remove anything that might have been there
+			err = os.RemoveAll(home)
+			if err != nil {
+				log.Fatalf("bump: %v", err)
+			}
+
+			// Finally move the package
 			err = os.Rename(root, home)
 			if err != nil {
 				log.Fatalf("bump: %v", err)
 			}
+
 			fmt.Printf("%s %s\n", pkg, strings.TrimSpace(c))
 			break
 		}
