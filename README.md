@@ -1,6 +1,6 @@
 # path.go - self contained GOPATH helper
 
-path.go is a self contained single file that helps with bumping third party repos and managing the GOPATH
+path.go is a self contained single file that helps with bumping third party repos and managing the GOPATH.
 
 ## Usage
 
@@ -18,8 +18,23 @@ git commit -m "Initial commit"
 go run path.go build -v github.com/philips/build.go/example
 ```
 
-## Test
+### Bumping a package
 
 ```
-go test path_test.go
+go run path.go bump github.com/goraft/raft
+```
+
+### Bumping all packages
+
+This will walk all of the packages installed in `third_party/src` and run the
+`bump` subcommand on it if it is a valid go pkg.
+
+```
+go run path.go bump-all
+```
+
+## Testing path.go
+
+```
+./test
 ```
