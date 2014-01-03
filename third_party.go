@@ -112,7 +112,7 @@ func setupProject(pkg string) {
 	src := path.Join(thirdPartyDir(), "src", pkg)
 	srcdir := path.Dir(src)
 
-	os.MkdirAll(srcdir, 0777)
+	os.MkdirAll(srcdir, 0755)
 
 	rel, err := filepath.Rel(srcdir, root)
 	if err != nil {
@@ -203,7 +203,15 @@ func bump(pkg string) {
 
 		ok, c := removeVcs(root)
 		if ok {
-			os.Rename(root, home)
+			err := os.MkdirAll(path.Dir(home), 0755)
+			if err != nil {
+				log.Fatalf("bump: %v", err)
+			}
+
+			err = os.Rename(root, home)
+			if err != nil {
+				log.Fatalf("bump: %v", err)
+			}
 			fmt.Printf("%s %s\n", pkg, strings.TrimSpace(c))
 			break
 		}
