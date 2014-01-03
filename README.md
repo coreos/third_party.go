@@ -35,6 +35,9 @@ go run path.go bump-all
 
 ## Testing path.go
 
+Becuase path.go has a `+build ignore` tag at the top you will need to use the
+test script to run the unit tests:
+
 ```
 ./test
 ```
