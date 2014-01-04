@@ -37,6 +37,15 @@ go run third_party.go bump github.com/goraft/raft
 github.com/goraft/raft c064081f635e519f162280f133faebc1a445106b
 ```
 
+It's also possible to bump a package to a specific ref
+
+```sh
+go run third_party.go bump github.com/goraft/raft 3509cfa7b1
+```
+```
+github.com/goraft/raft 3509cfa7b12a39cde502b0d4afa1dd1023ce603c
+```
+
 ### Bumping all packages
 
 This will walk all of the packages installed in `third_party/src` and run the
