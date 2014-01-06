@@ -361,7 +361,7 @@ func main() {
 	log.SetFlags(0)
 
 	if len(os.Args) <= 1 {
-		log.Fatalf("No commnad")
+		log.Fatalf("No command")
 	}
 
 	cmd := os.Args[1]
