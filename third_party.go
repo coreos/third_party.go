@@ -16,10 +16,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// This program builds a project and is a copy of path.go. See
-// github.com/philips/path.go
+// This program builds a project and is a copy of third_party.go. See
+// github.com/philips/third_party.go
 //
-// $ go run path.go
+// $ go run third_party.go
 //
 // See the README file for more details.
 package main
