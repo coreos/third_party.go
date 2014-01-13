@@ -66,7 +66,7 @@ func binDir() string {
 
 // runEnv execs a command like a shell script piping everything to the parent's
 // stderr/stdout and uses the given environment.
-func runEnv(env []string, name string, arg ...string) {
+func runEnv(env []string, name string, arg ...string) *os.ProcessState {
 	cmd := exec.Command(name, arg...)
 
 	cmd.Env = env
@@ -89,16 +89,18 @@ func runEnv(env []string, name string, arg ...string) {
 	go io.Copy(os.Stdout, stdout)
 	go io.Copy(os.Stderr, stderr)
 	cmd.Wait()
+
+	return cmd.ProcessState
 }
 
 // run calls runEnv with the GOPATH third_party packages.
-func run(name string, arg ...string) {
+func run(name string, arg ...string) *os.ProcessState {
 	env := append(os.Environ(),
 		"GOPATH="+thirdPartyDir(),
 		"GOBIN="+binDir(),
 	)
 
-	runEnv(env, name, arg...)
+	return runEnv(env, name, arg...)
 }
 
 // setupProject does the initial setup of the third_party src directory
@@ -386,5 +388,9 @@ func main() {
 		return
 	}
 
-	run("go", os.Args[1:]...)
+	ps := run("go", os.Args[1:]...)
+
+	if ps.Success() == false {
+		os.Exit(1)
+	}
 }
