@@ -3,6 +3,8 @@
 third_party.go is a self contained single file that helps with bumping third
 party repos and managing the GOPATH.
 
+[![Build Status](https://travis-ci.org/coreos/third_party.go.png)](https://travis-ci.org/coreos/third_party.go)
+
 ## Usage
 
 ### Setup a repo
