@@ -99,17 +99,17 @@ func setupProject(pkg string) {
 		log.Fatalf("Failed to get the current working directory: %v", err)
 	}
 
-	src := path.Join(thirdPartyDir(), "src", pkg)
-	srcdir := path.Dir(src)
+	pkgsrc := path.Join(srcDir(), pkg)
+	pkgsrcdir := path.Dir(pkgsrc)
 
-	os.MkdirAll(srcdir, 0755)
+	os.MkdirAll(pkgsrcdir, 0755)
 
-	rel, err := filepath.Rel(srcdir, root)
+	rel, err := filepath.Rel(pkgsrcdir, root)
 	if err != nil {
 		log.Fatalf("creating relative third party path: %v", err)
 	}
 
-	err = os.Symlink(rel, src)
+	err = os.Symlink(rel, pkgsrc)
 	if err != nil && os.IsExist(err) == false {
 		log.Fatalf("creating project third party symlink: %v", err)
 	}
@@ -196,7 +196,7 @@ func (v vcGit) commit() string {
 	return string(out)
 }
 
-// vcHg.udpate updates the given git dir to ref.
+// vcHg.update updates the given git dir to ref.
 func (v vcGit) update(ref string) error {
 	_, err := exec.Command("git",
 		"--work-tree="+path.Dir(string(v)),
