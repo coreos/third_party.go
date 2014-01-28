@@ -155,14 +155,18 @@ type vcHg string
 
 // vcHg.commit returns the current HEAD commit hash for a given hg dir.
 func (v vcHg) commit() string {
-	out, err := exec.Command("hg", "id", "-i", "-R", string(v)).Output()
+	out, err := exec.Command("hg",
+		"id",
+		"-i",
+		"-R", string(v),
+	).Output()
 	if err != nil {
 		return ""
 	}
 	return string(out)
 }
 
-// vcHg.udpate updates the given hg dir to ref.
+// vcHg.update updates the given hg dir to ref.
 func (v vcHg) update(ref string) error {
 	_, err := exec.Command("hg",
 		"update",
@@ -180,7 +184,12 @@ type vcGit string
 
 // vcGit.commit returns the current HEAD commit hash for a given git dir.
 func (v vcGit) commit() string {
-	out, err := exec.Command("git", "--git-dir="+string(v), "rev-parse", "HEAD").Output()
+	out, err := exec.Command(
+		"git",
+		"--git-dir="+string(v),
+		"rev-parse",
+		"HEAD",
+	).Output()
 	if err != nil {
 		return ""
 	}
@@ -292,8 +301,7 @@ func bump(pkg, version string) {
 // validPkg uses go list to decide if the given path is a valid go package.
 // This is used by the bumpAll walk to bump all of the existing packages.
 func validPkg(pkg string) bool {
-	env := append(os.Environ(),
-	)
+	env := append(os.Environ())
 	cmd := exec.Command("go", "list", pkg)
 	cmd.Env = env
 
