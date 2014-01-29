@@ -1,5 +1,6 @@
 #!/bin/sh
 
-tail -n +2 third_party.go > third_party_tmp.go
+TEST_FILE="third_party_tmp.go"
+trap "rm -f $TEST_FILE" SIGINT SIGTERM EXIT
+tail -n +2 third_party.go > $TEST_FILE
 go test -v .
-rm third_party_tmp.go

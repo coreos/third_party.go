@@ -99,17 +99,17 @@ func setupProject(pkg string) {
 		log.Fatalf("Failed to get the current working directory: %v", err)
 	}
 
-	src := path.Join(thirdPartyDir(), "src", pkg)
-	srcdir := path.Dir(src)
+	pkgsrc := path.Join(srcDir(), pkg)
+	pkgsrcdir := path.Dir(pkgsrc)
 
-	os.MkdirAll(srcdir, 0755)
+	os.MkdirAll(pkgsrcdir, 0755)
 
-	rel, err := filepath.Rel(srcdir, root)
+	rel, err := filepath.Rel(pkgsrcdir, root)
 	if err != nil {
 		log.Fatalf("creating relative third party path: %v", err)
 	}
 
-	err = os.Symlink(rel, src)
+	err = os.Symlink(rel, pkgsrc)
 	if err != nil && os.IsExist(err) == false {
 		log.Fatalf("creating project third party symlink: %v", err)
 	}
@@ -155,14 +155,18 @@ type vcHg string
 
 // vcHg.commit returns the current HEAD commit hash for a given hg dir.
 func (v vcHg) commit() string {
-	out, err := exec.Command("hg", "id", "-i", "-R", string(v)).Output()
+	out, err := exec.Command("hg",
+		"id",
+		"-i",
+		"-R", string(v),
+	).Output()
 	if err != nil {
 		return ""
 	}
 	return string(out)
 }
 
-// vcHg.udpate updates the given hg dir to ref.
+// vcHg.update updates the given hg dir to ref.
 func (v vcHg) update(ref string) error {
 	_, err := exec.Command("hg",
 		"update",
@@ -180,14 +184,19 @@ type vcGit string
 
 // vcGit.commit returns the current HEAD commit hash for a given git dir.
 func (v vcGit) commit() string {
-	out, err := exec.Command("git", "--git-dir="+string(v), "rev-parse", "HEAD").Output()
+	out, err := exec.Command(
+		"git",
+		"--git-dir="+string(v),
+		"rev-parse",
+		"HEAD",
+	).Output()
 	if err != nil {
 		return ""
 	}
 	return string(out)
 }
 
-// vcHg.udpate updates the given git dir to ref.
+// vcHg.update updates the given git dir to ref.
 func (v vcGit) update(ref string) error {
 	_, err := exec.Command("git",
 		"--work-tree="+path.Dir(string(v)),
@@ -292,8 +301,7 @@ func bump(pkg, version string) {
 // validPkg uses go list to decide if the given path is a valid go package.
 // This is used by the bumpAll walk to bump all of the existing packages.
 func validPkg(pkg string) bool {
-	env := append(os.Environ(),
-	)
+	env := append(os.Environ())
 	cmd := exec.Command("go", "list", pkg)
 	cmd.Env = env
 

@@ -19,24 +19,54 @@ package main
 import (
 	"io/ioutil"
 	"os"
-	"path"
+	"path/filepath"
 	"testing"
 )
 
 const (
-	TestDir = "test_dir"
+	TestPkg = "foo.com/bar/baz"
 )
 
+func TestSetupProject(t *testing.T) {
+	temp, _ := ioutil.TempDir("", "setupProject")
+	defer os.RemoveAll(temp)
+
+	if err := os.Chdir(temp); err != nil {
+		t.Log("error changing directory")
+		t.Fail()
+	}
+
+	setupProject(TestPkg)
+
+	pkgLinkPath := filepath.Join(thirdPartyDir(), "src", TestPkg)
+
+	fileinfo, _ := os.Lstat(pkgLinkPath)
+	if fileinfo.Mode()&os.ModeSymlink != os.ModeSymlink {
+		t.Logf("%v not a symbolic link!", pkgLinkPath)
+		t.Fail()
+	}
+
+	relLink, _ := os.Readlink(pkgLinkPath)
+
+	linkDest := filepath.Join(filepath.Dir(pkgLinkPath), relLink)
+	realTemp, _ := filepath.EvalSymlinks(temp)
+	if linkDest != realTemp {
+		t.Logf("incorrect symbolic link (should be %v but points to %v)", realTemp, linkDest)
+		t.Fail()
+	}
+}
+
 func TestRemoveVcs(t *testing.T) {
-	temp, _ := ioutil.TempDir(TestDir, "removeVcs")
+	temp, _ := ioutil.TempDir("", "removeVcs")
+
 	defer os.RemoveAll(temp)
 
 	proj := "github.com/removevcs"
-	p := path.Join(temp, proj, ".git")
+	p := filepath.Join(temp, proj, ".git")
 
 	os.MkdirAll(p, 0755)
 
-	removeVcs(path.Join(temp, proj))
+	removeVcs(filepath.Join(temp, proj))
 	info, _ := os.Stat(p)
 
 	if info != nil {
