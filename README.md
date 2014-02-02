@@ -65,3 +65,12 @@ test script to run the unit tests:
 ```
 ./test
 ```
+
+## Cross compiling
+
+`go run` will use the GOOS and GOARCH flags when trying to run third_party.go.
+This will most certainly cause a crash trying to run a third_party.go
+cross-compiled binary on your workstation.
+
+As a workaround you can provide the `-os` and `-arch` flags to set GOOS and
+GOARCH to the next process.
