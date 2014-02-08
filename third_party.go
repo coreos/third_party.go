@@ -25,6 +25,7 @@ limitations under the License.
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -33,6 +34,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
@@ -351,40 +353,48 @@ func bumpAll() {
 	}
 }
 
+var (
+	buildARCH   = flag.String("arch", runtime.GOARCH, "Architecture to build for.")
+	buildOS     = flag.String("os", runtime.GOOS, "Operating system to build for.")
+)
+
 func main() {
 	log.SetFlags(0)
+	flag.Parse()
 
-	// third_party manages GOPATH, no one else
+	// third_party manages GOPATH, GOBIN, GOOS and GOARCH
 	os.Setenv("GOPATH", thirdPartyDir())
 	os.Setenv("GOBIN", binDir())
+	os.Setenv("GOOS", *buildOS)
+	os.Setenv("GOARCH", *buildARCH)
 
-	if len(os.Args) <= 1 {
+	if len(flag.Args()) <= 0 {
 		log.Fatalf("No command")
 	}
 
-	cmd := os.Args[1]
+	cmd := flag.Args()[0]
 
-	if cmd == "setup" && len(os.Args) > 2 {
-		setupProject(os.Args[2])
+	if cmd == "setup" && len(flag.Args()) > 1 {
+		setupProject(flag.Args()[1])
 		return
 	}
 
-	if cmd == "bump" && len(os.Args) > 2 {
+	if cmd == "bump" && len(flag.Args()) > 1 {
 		ref := ""
-		if len(os.Args) > 3 {
-			ref = os.Args[3]
+		if len(flag.Args()) > 2 {
+			ref = flag.Args()[2]
 		}
 
-		bump(os.Args[2], ref)
+		bump(flag.Args()[1], ref)
 		return
 	}
 
-	if cmd == "bump-all" && len(os.Args) > 1 {
+	if cmd == "bump-all" && len(flag.Args()) > 0 {
 		bumpAll()
 		return
 	}
 
-	ps := run("go", os.Args[1:]...)
+	ps := run("go", flag.Args()[0:]...)
 
 	if ps.Success() == false {
 		os.Exit(1)
